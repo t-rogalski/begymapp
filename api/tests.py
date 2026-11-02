@@ -1,3 +1,3 @@
-from django.test import TestCase
+from .authentication.tests import AuthEndpointTests
 
-# Create your tests here.
+__all__ = ['AuthEndpointTests']
