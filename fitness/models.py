@@ -1,4 +1,5 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.db.models import Q
 
@@ -24,7 +25,21 @@ class Injury(models.TextChoices):
     LOWER_BACK = 'lower_back', 'Lower back'
 
 
-class AppUser(models.Model):
+class AppUserManager(BaseUserManager):
+    def create_user(self, username, password=None, **extra_fields):
+        if not username:
+            raise ValueError('Username is required.')
+
+        user = self.model(
+            username=self.model.normalize_username(username),
+            **extra_fields,
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+
+class AppUser(AbstractBaseUser):
     class ExperienceLevel(models.TextChoices):
         BEGINNER = 'beginner', 'Beginner'
         INTERMEDIATE = 'intermediate', 'Intermediate'
@@ -34,20 +49,28 @@ class AppUser(models.Model):
         STRENGTH = 'strength', 'Strength'
 
     username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=255, null=True, blank=True)
     birth_year = models.IntegerField()
     height_cm = models.IntegerField()
+    weight_kg = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+    )
     experience_level = models.CharField(max_length=20, choices=ExperienceLevel.choices)
-    goal = models.CharField(max_length=20, choices=Goal.choices)
+    goal = models.CharField(max_length=20, choices=Goal.choices, default=Goal.MUSCLE_GAIN)
     available_equipment = models.JSONField(default=list)
     injuries = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
-    class Meta:
-        db_table = 'user'
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = []
+
+    objects = AppUserManager()
 
     def __str__(self):
         return self.username
+
+
 
 
 class BodyWeightLog(models.Model):
@@ -254,3 +277,4 @@ class SetLog(models.Model):
 
     def __str__(self):
         return f'{self.workout_log} - {self.exercise} set {self.set_number}'
+

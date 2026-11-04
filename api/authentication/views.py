@@ -1,62 +1,30 @@
-from django.contrib.auth.hashers import check_password
-from django.core import signing
-from drf_spectacular.utils import extend_schema
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from fitness.models import AppUser
-
-from .serializers import (
-    LoginResponseSerializer,
-    LoginSerializer,
-    RegisterSerializer,
-    UserResponseSerializer,
-)
+from .serializers import RegisterSerializer, LoginSerializer
 
 
-class RegisterView(APIView):
-    permission_classes = [AllowAny]
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
 
-    @extend_schema(
-        request=RegisterSerializer,
-        responses={201: UserResponseSerializer},
-    )
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return Response(UserResponseSerializer(user).data, status=status.HTTP_201_CREATED)
 
+        refresh = RefreshToken.for_user(user)
 
-class LoginView(APIView):
-    permission_classes = [AllowAny]
-
-    @extend_schema(
-        request=LoginSerializer,
-        responses={200: LoginResponseSerializer},
-    )
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        try:
-            user = AppUser.objects.get(username=serializer.validated_data['username'])
-        except AppUser.DoesNotExist:
-            return Response(
-                {'detail': 'Invalid username or password.'},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        if not check_password(serializer.validated_data['password'], user.password):
-            return Response(
-                {'detail': 'Invalid username or password.'},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        token = signing.dumps({'user_id': user.id})
         return Response({
-            'token': token,
-            'user': UserResponseSerializer(user).data,
-        })
+            'user': serializer.data,
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        }, status=status.HTTP_201_CREATED)
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
+
