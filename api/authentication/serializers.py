@@ -1,15 +1,33 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from fitness.models import AppUser
+from .validators import (
+    validate_birth_year,
+    validate_height_cm,
+    validate_password,
+    validate_username,
+    validate_weight_kg,
+)
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
         required=True,
+        validators=[validate_password],
         style={'input_type': 'password'},
+    )
+    username = serializers.CharField(validators=[validate_username, UniqueValidator(
+        queryset=AppUser.objects.all(), message="This username is already taken.")])
+    birth_year = serializers.IntegerField(validators=[validate_birth_year])
+    height_cm = serializers.IntegerField(validators=[validate_height_cm])
+    weight_kg = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        validators=[validate_weight_kg],
     )
 
     class Meta:
@@ -43,4 +61,3 @@ class LoginSerializer(TokenObtainPairSerializer):
         self.user.last_login = timezone.now()
         self.user.save(update_fields=['last_login'])
         return data
-
