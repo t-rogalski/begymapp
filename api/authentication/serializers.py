@@ -2,6 +2,8 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from fitness.models import AppUser
 from .validators import (
@@ -61,3 +63,17 @@ class LoginSerializer(TokenObtainPairSerializer):
         self.user.last_login = timezone.now()
         self.user.save(update_fields=['last_login'])
         return data
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate_refresh(self, value):
+        try:
+            self.token = RefreshToken(value)
+        except TokenError:
+            raise serializers.ValidationError('Invalid or expired token.')
+        return value
+
+    def save(self):
+        self.token.blacklist()
