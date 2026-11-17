@@ -15,6 +15,21 @@ def validate_password(value):
     if not re.search(r'\d', value):
         raise ValidationError('Password must contain at least one digit.')
 
+def validate_password_change(user, current_password, new_password, confirmation):
+    errors = {}
+
+    if not user.check_password(current_password):
+        errors['current_password'] = 'Current password is incorrect.'
+
+    if new_password != confirmation:
+        errors['new_password_confirmation'] = 'Passwords do not match.'
+
+    if current_password == new_password:
+        errors['new_password'] = 'New password must be different from the current password.'
+
+    if errors:
+        raise ValidationError(errors)
+
 def validate_username(value):
     if len(value) < 3:
         raise ValidationError('Username must be at least 3 characters long.')

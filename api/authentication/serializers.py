@@ -10,6 +10,7 @@ from .validators import (
     validate_birth_year,
     validate_height_cm,
     validate_password,
+    validate_password_change,
     validate_username,
     validate_weight_kg,
 )
@@ -77,3 +78,33 @@ class LogoutSerializer(serializers.Serializer):
 
     def save(self):
         self.token.blacklist()
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        validators=[validate_password],
+        style={'input_type': 'password'},
+    )
+    new_password_confirmation = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+    )
+
+    def validate(self, attrs):
+        validate_password_change(
+            self.context['request'].user,
+            attrs['current_password'],
+            attrs['new_password'],
+            attrs['new_password_confirmation'],
+        )
+        return attrs
+
+    def save(self):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save(update_fields=['password'])

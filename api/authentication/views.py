@@ -5,7 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema
 
-from .serializers import RegisterSerializer, LoginSerializer, LogoutSerializer
+from .serializers import (
+    ChangePasswordSerializer,
+    RegisterSerializer,
+    LoginSerializer,
+    LogoutSerializer,
+)
 
 
 @extend_schema(
@@ -65,4 +70,23 @@ def logout(request):
     serializer.save()
     return Response(
         status=status.HTTP_204_NO_CONTENT,
+    )
+
+
+@extend_schema(
+    request=ChangePasswordSerializer,
+    responses={200: dict},
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    serializer = ChangePasswordSerializer(
+        data=request.data,
+        context={'request': request},
+    )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(
+        {'detail': 'Password changed successfully.'},
+        status=status.HTTP_200_OK,
     )
