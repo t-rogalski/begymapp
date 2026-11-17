@@ -55,8 +55,10 @@ class AppUser(AbstractBaseUser):
         max_digits=5,
         decimal_places=2,
     )
-    experience_level = models.CharField(max_length=20, choices=ExperienceLevel.choices)
-    goal = models.CharField(max_length=20, choices=Goal.choices, default=Goal.MUSCLE_GAIN)
+    experience_level = models.CharField(
+        max_length=20, choices=ExperienceLevel.choices)
+    goal = models.CharField(
+        max_length=20, choices=Goal.choices, default=Goal.MUSCLE_GAIN)
     available_equipment = models.JSONField(default=list)
     injuries = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -69,8 +71,6 @@ class AppUser(AbstractBaseUser):
 
     def __str__(self):
         return self.username
-
-
 
 
 class BodyWeightLog(models.Model):
@@ -92,15 +92,13 @@ class TrainingPlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     days_per_week = models.PositiveSmallIntegerField()
     mesocycle_weeks = models.PositiveSmallIntegerField()
-    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'training_plan'
         constraints = [
             models.UniqueConstraint(
-                fields=['user'],
-                condition=Q(is_active=True),
-                name='one_active_plan_per_user',
+                fields=['user', 'name'],
+                name='unique_training_plan_name_per_user',
             ),
         ]
 
@@ -175,34 +173,55 @@ class Exercise(models.Model):
         BAND_TENSION = 'band_tension', 'Band tension'
 
     name = models.CharField(max_length=150, unique=True)
-    movement_pattern = models.CharField(max_length=50, choices=MovementPattern.choices)
-    exercise_role = models.CharField(max_length=20, choices=ExerciseRole.choices)
+    movement_pattern = models.CharField(
+        max_length=50, choices=MovementPattern.choices)
+    exercise_role = models.CharField(
+        max_length=20, choices=ExerciseRole.choices)
     equipment = models.CharField(max_length=20, choices=Equipment.choices)
     laterality = models.CharField(max_length=20, choices=Laterality.choices)
-    sfr = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    skill_requirement = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    stability = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    recovery_cost = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    axial_load = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
+    sfr = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
+    skill_requirement = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
+    stability = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
+    recovery_cost = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)])
+    axial_load = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(3)])
     length_bias = models.CharField(max_length=20, choices=LengthBias.choices)
-    loading_scheme = models.CharField(max_length=20, choices=LoadingScheme.choices)
-    joint_shoulder = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
-    joint_elbow = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
-    joint_knee = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
-    joint_lower_back = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)])
+    loading_scheme = models.CharField(
+        max_length=20, choices=LoadingScheme.choices)
+    joint_shoulder = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(3)])
+    joint_elbow = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(3)])
+    joint_knee = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(3)])
+    joint_lower_back = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(3)])
 
     class Meta:
         db_table = 'exercise'
         constraints = [
-            models.CheckConstraint(condition=Q(sfr__gte=1, sfr__lte=5), name='exercise_sfr_1_5'),
-            models.CheckConstraint(condition=Q(skill_requirement__gte=1, skill_requirement__lte=5), name='exercise_skill_1_5'),
-            models.CheckConstraint(condition=Q(stability__gte=1, stability__lte=5), name='exercise_stability_1_5'),
-            models.CheckConstraint(condition=Q(recovery_cost__gte=1, recovery_cost__lte=5), name='exercise_recovery_1_5'),
-            models.CheckConstraint(condition=Q(axial_load__gte=1, axial_load__lte=3), name='exercise_axial_load_1_3'),
-            models.CheckConstraint(condition=Q(joint_shoulder__gte=0, joint_shoulder__lte=3), name='exercise_shoulder_0_3'),
-            models.CheckConstraint(condition=Q(joint_elbow__gte=0, joint_elbow__lte=3), name='exercise_elbow_0_3'),
-            models.CheckConstraint(condition=Q(joint_knee__gte=0, joint_knee__lte=3), name='exercise_knee_0_3'),
-            models.CheckConstraint(condition=Q(joint_lower_back__gte=0, joint_lower_back__lte=3), name='exercise_lower_back_0_3'),
+            models.CheckConstraint(condition=Q(
+                sfr__gte=1, sfr__lte=5), name='exercise_sfr_1_5'),
+            models.CheckConstraint(condition=Q(
+                skill_requirement__gte=1, skill_requirement__lte=5), name='exercise_skill_1_5'),
+            models.CheckConstraint(condition=Q(
+                stability__gte=1, stability__lte=5), name='exercise_stability_1_5'),
+            models.CheckConstraint(condition=Q(
+                recovery_cost__gte=1, recovery_cost__lte=5), name='exercise_recovery_1_5'),
+            models.CheckConstraint(condition=Q(
+                axial_load__gte=1, axial_load__lte=3), name='exercise_axial_load_1_3'),
+            models.CheckConstraint(condition=Q(
+                joint_shoulder__gte=0, joint_shoulder__lte=3), name='exercise_shoulder_0_3'),
+            models.CheckConstraint(condition=Q(
+                joint_elbow__gte=0, joint_elbow__lte=3), name='exercise_elbow_0_3'),
+            models.CheckConstraint(condition=Q(
+                joint_knee__gte=0, joint_knee__lte=3), name='exercise_knee_0_3'),
+            models.CheckConstraint(condition=Q(
+                joint_lower_back__gte=0, joint_lower_back__lte=3), name='exercise_lower_back_0_3'),
         ]
 
     def __str__(self):
@@ -229,14 +248,16 @@ class WorkoutExercise(models.Model):
     target_sets = models.PositiveSmallIntegerField()
     rep_min = models.PositiveSmallIntegerField()
     rep_max = models.PositiveSmallIntegerField()
-    target_rir = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
+    target_rir = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(4)])
     rest_seconds = models.PositiveSmallIntegerField()
 
     class Meta:
         db_table = 'workout_exercise'
         unique_together = [('workout', 'position')]
         constraints = [
-            models.CheckConstraint(condition=Q(target_rir__gte=0, target_rir__lte=4), name='workout_exercise_rir_0_4'),
+            models.CheckConstraint(condition=Q(
+                target_rir__gte=0, target_rir__lte=4), name='workout_exercise_rir_0_4'),
         ]
 
     def __str__(self):
@@ -245,7 +266,8 @@ class WorkoutExercise(models.Model):
 
 class WorkoutLog(models.Model):
     user = models.ForeignKey(AppUser, on_delete=models.CASCADE)
-    workout = models.ForeignKey(Workout, null=True, blank=True, on_delete=models.SET_NULL)
+    workout = models.ForeignKey(
+        Workout, null=True, blank=True, on_delete=models.SET_NULL)
     date = models.DateField()
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
@@ -262,19 +284,21 @@ class WorkoutLog(models.Model):
 class SetLog(models.Model):
     workout_log = models.ForeignKey(WorkoutLog, on_delete=models.CASCADE)
     exercise = models.ForeignKey(Exercise, on_delete=models.PROTECT)
-    workout_exercise = models.ForeignKey(WorkoutExercise, null=True, blank=True, on_delete=models.SET_NULL)
+    workout_exercise = models.ForeignKey(
+        WorkoutExercise, null=True, blank=True, on_delete=models.SET_NULL)
     set_number = models.PositiveSmallIntegerField()
     weight_kg = models.DecimalField(max_digits=6, decimal_places=2)
     reps = models.PositiveSmallIntegerField()
-    rir = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(4)])
+    rir = models.PositiveSmallIntegerField(null=True, blank=True, validators=[
+                                           MinValueValidator(0), MaxValueValidator(4)])
 
     class Meta:
         db_table = 'set_log'
         indexes = [models.Index(fields=['exercise', 'workout_log'])]
         constraints = [
-            models.CheckConstraint(condition=Q(rir__isnull=True) | Q(rir__gte=0, rir__lte=4), name='set_log_rir_0_4'),
+            models.CheckConstraint(condition=Q(rir__isnull=True) | Q(
+                rir__gte=0, rir__lte=4), name='set_log_rir_0_4'),
         ]
 
     def __str__(self):
         return f'{self.workout_log} - {self.exercise} set {self.set_number}'
-
